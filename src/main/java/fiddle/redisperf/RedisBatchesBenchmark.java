@@ -51,17 +51,25 @@ public class RedisBatchesBenchmark {
 
     @Setup(Level.Trial)
     public void setup(BenchmarkParams params) throws InterruptedException, ExecutionException {
-      String[] split = address.split(":");
       RedisURI uri;
-      if ("socket".equals(split[0])) {
-        uri = RedisURI.Builder
-            .socket(split[1])
-            .build();
-
-      } else {
-        uri = RedisURI.Builder
-            .redis(split[1], Integer.parseInt(split[2]))
-            .build();
+      switch (address) {
+        case "socket":
+          uri = RedisURI.Builder
+              .socket("/var/lib/redis/redis6370.sock")
+              .build();
+          break;
+        case "localhost":
+          uri = RedisURI.Builder
+              .redis("127.0.0.1", 6370)
+              .build();
+          break;
+        case "remote":
+          uri = RedisURI.Builder
+              .redis("192.168.61.245", 6370)
+              .build();
+          break;
+        default:
+          throw new IllegalArgumentException(address);
       }
       init(uri);
       conn.sync().set(KEY, "0");
@@ -82,7 +90,7 @@ public class RedisBatchesBenchmark {
 
   }
 
-  @Param({"socket:/var/lib/redis/redis6370.sock", "uri:127.0.0.1:6370", "uri:192.168.61.245:6370"})
+  @Param({"socket", "localhost", "remote"})
   public static String address;
 
   /**
